@@ -1,0 +1,1 @@
+\ir ./structure.sql;

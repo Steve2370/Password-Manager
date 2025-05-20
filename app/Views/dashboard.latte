@@ -1,0 +1,444 @@
+{extends layout.latte}
+
+{block content}
+<div class="container dashboard-container">
+    <div class="row mb-4 align-items-center">
+        <div class="col-md-7">
+            <h1 class="dashboard-welcome mb-1">Bonjour, <span class="text-primary">{$user->username}</span> 👋</h1>
+            <p class="text-muted">Bienvenue dans votre espace sécurisé</p>
+        </div>
+        <div class="col-md-5">
+            <div class="security-status-card p-3 rounded d-flex align-items-center">
+                <div class="security-icon me-3">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div>
+                    <h6 class="mb-1">Statut de sécurité</h6>
+                    <div class="d-flex align-items-center">
+                        <div class="progress flex-grow-1 me-2" style="height: 6px;">
+                            {if $warnings > 0}
+                                <div class="progress-bar bg-warning" role="progressbar" style="width: {100 - ($warnings / $totalPasswords * 100)}%;" aria-valuenow="{100 - ($warnings / $totalPasswords * 100)}" aria-valuemin="0" aria-valuemax="100"></div>
+                            {else}
+                                <div class="progress-bar bg-success" role="progressbar" style="width: 100%;" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                            {/if}
+                        </div>
+                        <span class="badge {$warnings > 0 ? 'bg-warning' : 'bg-success'}">{$warnings > 0 ? 'Attention' : 'Bon'}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-card-body">
+                    <div class="stats-icon bg-primary">
+                        <i class="fas fa-key"></i>
+                    </div>
+                    <div class="stats-info">
+                        <h2 class="stats-value">{$totalPasswords}</h2>
+                        <p class="stats-title">Mots de passe</p>
+                    </div>
+                </div>
+                <div class="stats-footer">
+                    <a href="/passwords" class="text-primary">
+                        <i class="fas fa-list me-1"></i>Voir tous
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-card-body">
+                    <div class="stats-icon {$warnings > 0 ? 'bg-warning' : 'bg-success'}">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="stats-info">
+                        <h2 class="stats-value">{$warnings}</h2>
+                        <p class="stats-title">Alertes</p>
+                    </div>
+                </div>
+                <div class="stats-footer">
+                    <a href="#security-issues" class="text-{$warnings > 0 ? 'warning' : 'success'}">
+                        <i class="fas fa-exclamation-circle me-1"></i>{$warnings > 0 ? 'Voir les problèmes' : 'Tout est bon!'}
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-card-body">
+                    <div class="stats-icon bg-success">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <div class="stats-info">
+                        <h2 class="stats-value">{$strongPasswords}</h2>
+                        <p class="stats-title">Mots de passe forts</p>
+                    </div>
+                </div>
+                <div class="stats-footer">
+                        <span class="text-success">
+                            <i class="fas fa-check-circle me-1"></i>{$totalPasswords > 0 ? floor(($strongPasswords / $totalPasswords) * 100) : 0}% du total
+                        </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-card-body">
+                    <div class="stats-icon bg-info">
+                        <i class="fas fa-share-alt"></i>
+                    </div>
+                    <div class="stats-info">
+                        <h2 class="stats-value">0</h2>
+                        <p class="stats-title">Partagés</p>
+                    </div>
+                </div>
+                <div class="stats-footer">
+                    <a href="/passwords/shared" class="text-info">
+                        <i class="fas fa-share me-1"></i>Voir partagés
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-lg-6">
+            <div class="card h-100 dashboard-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Mots de passe récents</h5>
+                    <a href="/passwords" class="btn btn-sm btn-outline-primary">Voir tout</a>
+                </div>
+                <div class="card-body">
+                    <div class="password-list">
+                        {if empty($recentPasswords)}
+                        <div class="text-center py-4">
+                            <div class="mb-3">
+                                <i class="fas fa-folder-open fa-3x text-muted"></i>
+                            </div>
+                            <p>Aucun mot de passe enregistré</p>
+                            <a href="/passwords/create" class="btn btn-primary">
+                                <i class="fas fa-plus me-1"></i>Ajouter un mot de passe
+                            </a>
+                        </div>
+                        {else}
+                        {foreach $recentPasswords as $password}
+                        <div class="password-item d-flex align-items-center p-3 border-bottom">
+                            <div class="password-icon-sm me-3 bg-primary">
+                                <i class="fas fa-globe"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">{$password->serviceName}</h6>
+                                <p class="text-muted small mb-0">{$password->serviceUsername}</p>
+                            </div>
+                            <div class="ms-auto d-flex">
+                                <button class="btn btn-sm btn-light me-1 copy-password" data-password="{$password->servicePassword}" data-bs-toggle="tooltip" title="Copier le mot de passe">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                                <a href="/passwords/{$password->id}" class="btn btn-sm btn-light" data-bs-toggle="tooltip" title="Voir les détails">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </div>
+                        </div>
+                        {/foreach}
+                        {/if}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card h-100 dashboard-card" id="security-issues">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Problèmes de sécurité</h5>
+                    {if $warnings > 0}
+                        <button class="btn btn-sm btn-outline-success">Résoudre tout</button>
+                    {/if}
+                </div>
+                <div class="card-body">
+                    <div class="security-issue-list">
+                        {if $warnings == 0}
+                            <div class="text-center py-4">
+                                <div class="mb-3">
+                                    <i class="fas fa-check-circle fa-3x text-success"></i>
+                                </div>
+                                <h6 class="mb-2">Tout est sécurisé!</h6>
+                                <p class="text-muted">Vous n'avez actuellement aucun problème de sécurité.</p>
+                            </div>
+                        {else}
+                            {if $strengthStats['very_weak'] > 0}
+                                <div class="security-issue p-3 border-bottom">
+                                    <div class="d-flex">
+                                        <div class="security-issue-icon text-danger me-3">
+                                            <i class="fas fa-skull-crossbones fa-lg"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-1">Mots de passe très faibles</h6>
+                                            <p class="mb-2 text-muted small">Vous avez <strong>{$strengthStats['very_weak']}</strong> mots de passe considérés comme très faibles.</p>
+                                            <div>
+                                                <a href="/passwords" class="btn btn-sm btn-danger">Résoudre maintenant</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {/if}
+
+                            {if $strengthStats['weak'] > 0}
+                                <div class="security-issue p-3 border-bottom">
+                                    <div class="d-flex">
+                                        <div class="security-issue-icon text-warning me-3">
+                                            <i class="fas fa-exclamation-triangle fa-lg"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-1">Mots de passe faibles</h6>
+                                            <p class="mb-2 text-muted small">Vous avez <strong>{$strengthStats['weak']}</strong> mots de passe qui pourraient être plus sécurisés.</p>
+                                            <div>
+                                                <a href="/passwords" class="btn btn-sm btn-warning">Résoudre</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {/if}
+
+                            <div class="security-issue p-3">
+                                <div class="d-flex">
+                                    <div class="security-issue-icon text-info me-3">
+                                        <i class="fas fa-info-circle fa-lg"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1">Conseils de sécurité</h6>
+                                        <p class="mb-2 text-muted small">Pour une meilleure sécurité, vos mots de passe devraient :</p>
+                                        <ul class="text-muted small mb-2">
+                                            <li>Contenir au moins 12 caractères</li>
+                                            <li>Inclure des majuscules, minuscules, chiffres et symboles</li>
+                                            <li>Être différents pour chaque service</li>
+                                            <li>Être renouvelés régulièrement</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        {/if}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <div class="card dashboard-card">
+                <div class="card-header">
+                    <h5 class="mb-0">Force des mots de passe</h5>
+                </div>
+                <div class="card-body">
+                    <div class="password-strength-chart">
+                        <canvas id="passwordStrengthChart" height="250"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card dashboard-card">
+                <div class="card-header">
+                    <h5 class="mb-0">Activité récente</h5>
+                </div>
+                <div class="card-body">
+                    <div class="activity-list">
+                        {if $totalPasswords == 0}
+                            <div class="text-center py-4">
+                                <div class="mb-3">
+                                    <i class="fas fa-history fa-3x text-muted"></i>
+                                </div>
+                                <p>Aucune activité récente</p>
+                            </div>
+                        {else}
+                            <div class="activity-item d-flex align-items-start mb-3">
+                                <div class="activity-icon bg-primary me-3">
+                                    <i class="fas fa-sign-in-alt"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Connexion réussie</h6>
+                                    <p class="mb-1 text-muted small">Vous vous êtes connecté depuis votre navigateur.</p>
+                                    <p class="text-muted small mb-0">Aujourd'hui</p>
+                                </div>
+                            </div>
+                            {if $totalPasswords > 0}
+                                <div class="activity-item d-flex align-items-start mb-3">
+                                    <div class="activity-icon bg-success me-3">
+                                        <i class="fas fa-check"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1">Coffre-fort synchronisé</h6>
+                                        <p class="mb-1 text-muted small">Votre coffre-fort a été synchronisé avec succès.</p>
+                                        <p class="text-muted small mb-0">Aujourd'hui</p>
+                                    </div>
+                                </div>
+                            {/if}
+                        {/if}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card dashboard-card">
+                <div class="card-header">
+                    <h5 class="mb-0">Actions rapides</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="row g-0">
+                        <div class="col-md-3 border-end">
+                            <div class="quick-action p-4 text-center">
+                                <div class="quick-action-icon mb-3">
+                                    <i class="fas fa-plus-circle"></i>
+                                </div>
+                                <h6 class="mb-2">Ajouter un mot de passe</h6>
+                                <p class="text-muted small mb-3">Enregistrez un nouveau compte</p>
+                                <a href="/passwords/create" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-plus me-1"></i>Ajouter
+                                </a>
+                            </div>
+                        </div>
+
+                        <div class="col-md-3 border-end">
+                            <div class="quick-action p-4 text-center">
+                                <div class="quick-action-icon mb-3">
+                                    <i class="fas fa-sync-alt"></i>
+                                </div>
+                                <h6 class="mb-2">Générer un mot de passe</h6>
+                                <p class="text-muted small mb-3">Créez un mot de passe sécurisé</p>
+                                <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#generatePasswordModal">
+                                    <i class="fas fa-dice me-1"></i>Générer
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="col-md-3 border-end">
+                            <div class="quick-action p-4 text-center">
+                                <div class="quick-action-icon mb-3">
+                                    <i class="fas fa-file-export"></i>
+                                </div>
+                                <h6 class="mb-2">Exporter vos données</h6>
+                                <p class="text-muted small mb-3">Sauvegardez vos mots de passe</p>
+                                <button class="btn btn-sm btn-info">
+                                    <i class="fas fa-download me-1"></i>Exporter
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="col-md-3">
+                            <div class="quick-action p-4 text-center">
+                                <div class="quick-action-icon mb-3">
+                                    <i class="fas fa-shield-alt"></i>
+                                </div>
+                                <h6 class="mb-2">Analyse de sécurité</h6>
+                                <p class="text-muted small mb-3">Vérifiez la sécurité de vos mots de passe</p>
+                                <button class="btn btn-sm btn-secondary">
+                                    <i class="fas fa-check me-1"></i>Analyser
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <div class="modal fade" id="generatePasswordModal" tabindex="-1" aria-labelledby="generatePasswordModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="generatePasswordModalLabel">Générer un mot de passe</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="modal-password-length" class="form-label">Longueur</label>
+                            <input type="range" class="form-range" id="modal-password-length" min="8" max="32" value="16">
+                            <div class="d-flex justify-content-between">
+                                <span class="small text-muted">8</span>
+                                <span id="modal-length-value" class="small text-primary fw-bold">16</span>
+                                <span class="small text-muted">32</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="password-strength mb-2">
+                                <label class="form-label">Force du mot de passe</label>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar bg-success" role="progressbar" style="width: 100%;" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </div>
+                            <div class="password-feedback small text-success">
+                                <i class="fas fa-shield-alt me-1"></i>Très fort
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <div class="d-flex flex-wrap gap-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="modal-include-uppercase" checked>
+                                    <label class="form-check-label" for="modal-include-uppercase">
+                                        Majuscules (A-Z)
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="modal-include-lowercase" checked>
+                                    <label class="form-check-label" for="modal-include-lowercase">
+                                        Minuscules (a-z)
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="modal-include-numbers" checked>
+                                    <label class="form-check-label" for="modal-include-numbers">
+                                        Chiffres (0-9)
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="modal-include-symbols" checked>
+                                    <label class="form-check-label" for="modal-include-symbols">
+                                        Symboles (!@#$%^&*)
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="modal-generated-password" readonly>
+                            <button class="btn btn-outline-secondary copy-modal-password" type="button" data-bs-toggle="tooltip" title="Copier">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                            <button class="btn btn-primary modal-generate-password" type="button">
+                                <i class="fas fa-dice me-1"></i>Générer
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Conseil</strong>: Un mot de passe fort doit être long, complexe et unique. Utilisez au moins 12 caractères avec un mélange de lettres, chiffres et symboles.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                    <a href="/passwords/create" class="btn btn-success">
+                        <i class="fas fa-plus me-1"></i>Créer un mot de passe avec celui-ci
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+{/block}
